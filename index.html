@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Прототип Rewinding</title>
+<link rel="icon" type="image/png" href="index.icon.png">
+<link rel="apple-touch-icon" href="index.apple-touch-icon.png">
+<style>
+/* Single dark look: a game screen, the dollhouse at night. Canvas fills the screen, loading card sits in the middle. */
+:root {
+	--ink: #160f0b;
+	--wood: #2a1d15;
+	--brass: #c9a24a;
+	--brass-dim: #7d6430;
+	--cream: #f6ead6;
+	--scarf: #d4282a;
+	--font-display: "Cormorant Garamond", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+	--font-body: "Manrope", "Segoe UI", system-ui, sans-serif;
+	color-scheme: dark;
+}
+html, body { height: 100%; }
+body {
+	margin: 0;
+	background: var(--ink);
+	color: var(--cream);
+	overflow: hidden;
+	touch-action: none;
+	-webkit-user-select: none;
+	user-select: none;
+	-webkit-touch-callout: none;
+	font-family: var(--font-body);
+}
+#canvas {
+	position: fixed;
+	inset: 0;
+	display: block;
+	width: 100vw;
+	height: 100vh;
+	outline: none;
+}
+#status {
+	position: fixed;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	background:
+		radial-gradient(ellipse at 30% 70%, rgba(201, 162, 74, 0.12), transparent 55%),
+		var(--ink);
+	padding-left: max(16px, env(safe-area-inset-left, 0px));
+	padding-right: max(16px, env(safe-area-inset-right, 0px));
+	z-index: 2;
+}
+.card {
+	display: grid;
+	gap: 14px;
+	width: min(420px, 100%);
+	text-align: center;
+}
+.logo {
+	font-family: var(--font-display);
+	font-weight: 600;
+	font-size: clamp(34px, 7vw, 54px);
+	letter-spacing: 0.08em;
+	color: var(--brass);
+	margin: 0;
+	line-height: 1;
+	text-wrap: balance;
+}
+.logo i {
+	font-style: normal;
+	display: inline-block;
+	color: var(--scarf);
+}
+.sub {
+	margin: 0;
+	font-size: 14px;
+	color: rgba(246, 234, 214, 0.7);
+	letter-spacing: 0.04em;
+}
+.bar {
+	height: 8px;
+	border-radius: 4px;
+	background: var(--wood);
+	border: 1px solid var(--brass-dim);
+	overflow: hidden;
+}
+.bar span {
+	display: block;
+	height: 100%;
+	width: 0%;
+	background: var(--brass);
+	transition: width 0.2s linear;
+}
+#status-text {
+	margin: 0;
+	font-size: 13px;
+	color: rgba(246, 234, 214, 0.65);
+	font-variant-numeric: tabular-nums;
+	min-height: 1.4em;
+}
+#status-text.error {
+	color: #f0a0a0;
+	font-size: 14px;
+	line-height: 1.45;
+	white-space: pre-line;
+}
+.tip {
+	margin: 6px 0 0;
+	font-size: 13px;
+	color: rgba(246, 234, 214, 0.55);
+	line-height: 1.5;
+}
+@media (prefers-reduced-motion: reduce) {
+	.bar span { transition: none; }
+}
+</style>
+<style>[hidden]{display:none!important}</style>
+</head>
+<body>
+
+
+<canvas id="canvas" tabindex="0">Браузер не поддерживает canvas.</canvas>
+
+<div id="status">
+	<div class="card">
+		<h1 class="logo">REW<i>I</i>NDING</h1>
+		<p class="sub">Прототип 0.1 · прихожая кукольного домика</p>
+		<div class="bar" aria-hidden="true"><span id="bar"></span></div>
+		<p id="status-text" role="status">Загружаю игру…</p>
+		<p class="tip">Держи телефон горизонтально. Левый палец — ходьба, циферблат справа — отмотка времени.</p>
+	</div>
+</div>
+
+<script>
+window.__setLoad = function (frac, label) {
+	document.getElementById('bar').style.width = Math.round(Math.max(0, Math.min(1, frac)) * 100) + '%';
+	if (label != null) document.getElementById('status-text').textContent = label;
+};
+</script>
+<script src="index.js"></script>
+<script>
+(function () {
+	const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":41464,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+	const status = document.getElementById('status');
+	const text = document.getElementById('status-text');
+
+	function fail(err) {
+		console.error(err);
+		text.className = 'error';
+		const msg = err instanceof Error ? err.message : String(err || 'Неизвестная ошибка');
+		text.textContent = 'Не получилось запустить игру.\n' + msg;
+	}
+
+	const missing = Engine.getMissingFeatures({ threads: false });
+	if (missing.length) {
+		fail(new Error('Не хватает возможностей браузера:\n' + missing.join('\n')));
+		return;
+	}
+	const engine = new Engine(GODOT_CONFIG);
+	engine.startGame({
+		onProgress: function (current, total) {
+			if (current > 0 && total > 0) {
+				window.__setLoad(current / total, current >= total ? 'Запуск…' : 'Загрузка: ' + (current / 1048576).toFixed(1) + ' из ' + (total / 1048576).toFixed(1) + ' МБ');
+			}
+		},
+	}).then(function () {
+		window.__setLoad(1, '');
+		status.hidden = true;
+	}, fail);
+})();
+</script>
+
+</body>
+</html>
