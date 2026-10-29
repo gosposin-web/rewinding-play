@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
@@ -121,15 +121,15 @@ body {
 <body>
 
 
-<canvas id="canvas" tabindex="0">Браузер не поддерживает canvas.</canvas>
+<canvas id="canvas" tabindex="0">Your browser does not support canvas.</canvas>
 
 <div id="status">
 	<div class="card">
 		<h1 class="logo">REW<i>I</i>NDING</h1>
-		<p class="sub">Сборка 0.99.1 · объёмный свет, сглаживание</p>
+		<p class="sub">Build 0.99.2</p>
 		<div class="bar" aria-hidden="true"><span id="bar"></span></div>
-		<p id="status-text" role="status">Загружаю игру…</p>
-		<p class="tip">Держи телефон горизонтально. Левый палец — ходьба, циферблат справа — отмотка времени.</p>
+		<p id="status-text" role="status">Loading…</p>
+		<p class="tip">Hold your phone sideways. Left thumb walks, the dial on the right rewinds time.</p>
 	</div>
 </div>
 
@@ -142,27 +142,27 @@ window.__setLoad = function (frac, label) {
 <script src="index.js"></script>
 <script>
 (function () {
-	const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":87438840,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+	const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":96792052,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 	const status = document.getElementById('status');
 	const text = document.getElementById('status-text');
 
 	function fail(err) {
 		console.error(err);
 		text.className = 'error';
-		const msg = err instanceof Error ? err.message : String(err || 'Неизвестная ошибка');
-		text.textContent = 'Не получилось запустить игру.\n' + msg;
+		const msg = err instanceof Error ? err.message : String(err || 'Unknown error');
+		text.textContent = 'The game could not start.\n' + msg;
 	}
 
 	const missing = Engine.getMissingFeatures({ threads: false });
 	if (missing.length) {
-		fail(new Error('Не хватает возможностей браузера:\n' + missing.join('\n')));
+		fail(new Error('Your browser is missing:\n' + missing.join('\n')));
 		return;
 	}
 	const engine = new Engine(GODOT_CONFIG);
 	engine.startGame({
 		onProgress: function (current, total) {
 			if (current > 0 && total > 0) {
-				window.__setLoad(current / total, current >= total ? 'Запуск…' : 'Загрузка: ' + (current / 1048576).toFixed(1) + ' из ' + (total / 1048576).toFixed(1) + ' МБ');
+				window.__setLoad(current / total, current >= total ? 'Starting…' : 'Loading: ' + (current / 1048576).toFixed(1) + ' of ' + (total / 1048576).toFixed(1) + ' MB');
 			}
 		},
 	}).then(function () {
